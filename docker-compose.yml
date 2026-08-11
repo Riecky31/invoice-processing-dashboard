@@ -1,0 +1,19 @@
+services:
+  postgres:
+    image: postgres:16
+    container_name: invoice-dashboard-db
+    restart: unless-stopped
+
+    environment:
+      POSTGRES_DB: invoice_dashboard
+      POSTGRES_USER: invoice_user
+      POSTGRES_PASSWORD: invoice_password
+
+    ports:
+      - "5432:5432"
+
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+
+volumes:
+  postgres_data:
