@@ -1,0 +1,6 @@
+data/outlook/
+data/outlook_downloads/
+__pycache__/
+*.py[cod]
+.venv/
+.env.local

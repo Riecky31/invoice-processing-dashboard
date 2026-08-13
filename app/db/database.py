@@ -1,13 +1,11 @@
-import os
-
-from dotenv import load_dotenv
 from sqlalchemy import create_engine, text
+from sqlalchemy.orm import sessionmaker
 
+from app.config import get_settings
 from app.db.models import Base
 
-load_dotenv()
-
-DATABASE_URL = os.getenv("DATABASE_URL")
+settings = get_settings()
+DATABASE_URL = settings.database_url
 
 if not DATABASE_URL:
     raise RuntimeError("DATABASE_URL is not configured")
@@ -15,6 +13,13 @@ if not DATABASE_URL:
 engine = create_engine(
     DATABASE_URL,
     pool_pre_ping=True,
+)
+
+SessionLocal = sessionmaker(
+    bind=engine,
+    autoflush=False,
+    autocommit=False,
+    expire_on_commit=False,
 )
 
 
