@@ -4,7 +4,7 @@ from datetime import datetime
 from decimal import Decimal
 from pathlib import Path
 from typing import Any
-
+from app.services.tat.calculator import calculate_tat_minutes
 from sqlalchemy import select
 
 from app.data.excel_reader import read_weekly_report
@@ -78,9 +78,11 @@ def process_weekly_report(file_path: str | Path) -> ImportResult:
             filename=file_path.name,
             status="processing",
         )
+
         session.add(upload)
         session.commit()
         session.refresh(upload)
+
         upload_id = upload.id
 
         try:
@@ -90,42 +92,106 @@ def process_weekly_report(file_path: str | Path) -> ImportResult:
             duplicates_found = 0
 
             for _, row in df.iterrows():
+
                 record_id = _build_record_id(row)
+
                 existing_id = session.scalar(
-                    select(Invoice.id).where(Invoice.record_id == record_id)
+                    select(Invoice.id).where(
+                        Invoice.record_id == record_id
+                    )
                 )
 
                 if existing_id:
                     duplicates_found += 1
                     continue
 
+                invoice_processing_date = _as_datetime(
+                    row["Invoice Processing Date"]
+                )
+
+                invoice_date = _as_datetime(
+                    row["Invoice Date"]
+                )
+
+                tat_minutes = calculate_tat_minutes(
+                    invoice_date,
+                    invoice_processing_date,
+                )
+
+      
                 invoice = Invoice(
                     record_id=record_id,
-                    user_id=_as_text(row["User ID"]),
-                    invoice_processing_date=_as_datetime(
-                        row["Invoice Processing Date"]
+
+                    user_id=_as_text(
+                        row["User ID"]
                     ),
-                    invoice_date=_as_datetime(row["Invoice Date"]),
-                    invoice_number=_as_text(row["Invoice Number"]),
-                    invoice_type=_as_text(row["Invoice Type"]),
-                    vendor_name=_as_text(row["Vendor Name"]),
-                    vendor_id=_as_text(row["Vendor ID"]),
-                    business_unit=_as_text(row["Business Unit"]),
-                    invoice_amount=_as_decimal(row["Invoice Amount"]),
-                    invoice_tax_amount=_as_decimal(row["Invoice Tax Amount"]),
-                    currency=_as_text(row["Currency"]),
-                    reporting_month=_as_text(row["Reporting Month"]),
-                    reporting_year=int(row["Reporting Year"]),
-                    reporting_week=int(row["Reporting Week"]),
+
+                    invoice_processing_date=invoice_processing_date,
+
+                    invoice_date=invoice_date,
+
+                    invoice_number=_as_text(
+                        row["Invoice Number"]
+                    ),
+
+                    invoice_type=_as_text(
+                        row["Invoice Type"]
+                    ),
+
+                    vendor_name=_as_text(
+                        row["Vendor Name"]
+                    ),
+
+                    vendor_id=_as_text(
+                        row["Vendor ID"]
+                    ),
+
+                    business_unit=_as_text(
+                        row["Business Unit"]
+                    ),
+
+                    invoice_amount=_as_decimal(
+                        row["Invoice Amount"]
+                    ),
+
+                    invoice_tax_amount=_as_decimal(
+                        row["Invoice Tax Amount"]
+                    ),
+
+                    currency=_as_text(
+                        row["Currency"]
+                    ),
+
+                    reporting_month=_as_text(
+                        row["Reporting Month"]
+                    ),
+
+                    reporting_year=int(
+                        row["Reporting Year"]
+                    ),
+
+                    reporting_week=int(
+                        row["Reporting Week"]
+                    ),
+
                     source_file=file_path.name,
+
+                    tat_minutes=tat_minutes,
                 )
+
                 session.add(invoice)
+
                 rows_inserted += 1
 
+     
             upload.rows_found = len(df)
+
             upload.rows_inserted = rows_inserted
+
             upload.duplicates_found = duplicates_found
+
             upload.status = "completed"
+
             session.commit()
 
             return ImportResult(
@@ -138,8 +204,13 @@ def process_weekly_report(file_path: str | Path) -> ImportResult:
             )
 
         except Exception:
+
             session.rollback()
-            failed_upload = session.get(Upload, upload_id)
+
+            failed_upload = session.get(
+                Upload,
+                upload_id,
+            )
 
             if failed_upload:
                 failed_upload.status = "failed"

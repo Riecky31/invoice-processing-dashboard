@@ -29,9 +29,7 @@ def parse_excel_datetime(series: pd.Series) -> pd.Series:
 
 
 def read_weekly_report(file_path: str | Path) -> pd.DataFrame:
-    """
-    Read, clean and validate a weekly invoice Excel report.
-    """
+   
 
     file_path = Path(file_path)
 

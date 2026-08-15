@@ -13,7 +13,7 @@ from sqlalchemy import select
 from app.config import Settings, get_settings
 from app.db.database import SessionLocal
 from app.db.models import EmailAttachmentImport
-from app.services.importer import ImportResult, process_weekly_report
+from app.services.invoice.importer import ImportResult, process_weekly_report
 
 
 GRAPH_BASE_URL = "https://graph.microsoft.com/v1.0"

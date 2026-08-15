@@ -16,21 +16,12 @@ configure_page("Staff Performance")
 
 sidebar_header()
 
-
-# =========================================================
-# PAGE HEADER
-# =========================================================
-
 st.title("👥 Staff Performance")
 
 st.caption(
     "Invoice processing activity by User ID"
 )
 
-
-# =========================================================
-# LOAD DATA
-# =========================================================
 
 df = load_invoices()
 
@@ -43,10 +34,6 @@ if df.empty:
 
     st.stop()
 
-
-# =========================================================
-# STAFF SUMMARY
-# =========================================================
 
 summary = get_staff_summary(
     df
@@ -61,10 +48,6 @@ if summary.empty:
 
     st.stop()
 
-
-# =========================================================
-# SEARCH
-# =========================================================
 
 search = st.text_input(
     "🔎 Search staff",
@@ -85,11 +68,6 @@ if search:
             na=False,
         )
     ]
-
-
-# =========================================================
-# KPIs
-# =========================================================
 
 col1, col2, col3, col4 = st.columns(4)
 
@@ -123,10 +101,6 @@ col4.metric(
 st.divider()
 
 
-# =========================================================
-# STAFF COUNT
-# =========================================================
-
 st.subheader(
     f"Staff Members ({len(display_summary):,})"
 )
@@ -148,11 +122,6 @@ else:
 
 
 st.divider()
-
-
-# =========================================================
-# INVOICE VOLUME
-# =========================================================
 
 st.subheader(
     "📊 Invoices Processed by Staff"
@@ -177,10 +146,6 @@ if not display_summary.empty:
     )
 
 
-# =========================================================
-# INVOICE VALUE
-# =========================================================
-
 st.subheader(
     "💰 Invoice Value by Staff"
 )
@@ -203,10 +168,6 @@ if not display_summary.empty:
         use_container_width=True,
     )
 
-
-# =========================================================
-# DETAILED STAFF TABLE
-# =========================================================
 
 st.subheader(
     "📋 Detailed Staff Performance"
