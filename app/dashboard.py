@@ -15,6 +15,20 @@ from app.services.reporting.trends import (
 )
 
 
+def format_tat_hours(value):
+    if value is None:
+        return "N/A"
+
+    return f"{value:.1f} hrs"
+
+
+def format_percentage(value):
+    if value is None:
+        return "N/A"
+
+    return f"{value:.1f}%"
+
+
 # =========================================================
 # PAGE CONFIGURATION
 # =========================================================
@@ -194,13 +208,17 @@ with col2:
 with col3:
     st.metric(
         "Average TAT",
-        f"{tat_metrics['average_tat_hours']:.1f} hrs",
+        format_tat_hours(
+            tat_metrics["average_tat_hours"]
+        ),
     )
 
 with col4:
     st.metric(
         "SLA %",
-        f"{tat_metrics['sla_percentage']:.1f}%",
+        format_percentage(
+            tat_metrics["sla_percentage"]
+        ),
     )
 
 
@@ -377,7 +395,9 @@ with tat_col1:
 
     st.metric(
         "Average TAT",
-        f"{tat_metrics['average_tat_hours']:.1f} hrs",
+        format_tat_hours(
+            tat_metrics["average_tat_hours"]
+        ),
     )
 
 
@@ -385,7 +405,9 @@ with tat_col2:
 
     st.metric(
         "Median TAT",
-        f"{tat_metrics['median_tat_hours']:.1f} hrs",
+        format_tat_hours(
+            tat_metrics["median_tat_hours"]
+        ),
     )
 
 
@@ -393,7 +415,9 @@ with tat_col3:
 
     st.metric(
         "Fastest",
-        f"{tat_metrics['minimum_tat_hours']:.1f} hrs",
+        format_tat_hours(
+            tat_metrics["minimum_tat_hours"]
+        ),
     )
 
 
@@ -401,7 +425,9 @@ with tat_col4:
 
     st.metric(
         "Slowest",
-        f"{tat_metrics['maximum_tat_hours']:.1f} hrs",
+        format_tat_hours(
+            tat_metrics["maximum_tat_hours"]
+        ),
     )
 
 

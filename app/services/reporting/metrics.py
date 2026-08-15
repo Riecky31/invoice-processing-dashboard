@@ -1,6 +1,9 @@
 import pandas as pd
 
 
+DEFAULT_SLA_TARGET_HOURS = 24.0
+
+
 def calculate_kpis(df: pd.DataFrame) -> dict:
     """
     Calculate the main dashboard KPIs.
@@ -58,7 +61,10 @@ def calculate_kpis(df: pd.DataFrame) -> dict:
     }
 
 
-def calculate_tat_metrics(df: pd.DataFrame) -> dict:
+def calculate_tat_metrics(
+    df: pd.DataFrame,
+    sla_target_hours: float = DEFAULT_SLA_TARGET_HOURS,
+) -> dict:
     """
     Calculate TAT statistics from tat_minutes.
 
@@ -70,12 +76,17 @@ def calculate_tat_metrics(df: pd.DataFrame) -> dict:
 
     empty_result = {
         "tat_count": 0,
+        "sla_target_hours": round(sla_target_hours, 2),
+        "sla_count": 0,
+        "sla_percentage": None,
         "average_tat_minutes": None,
         "average_tat_hours": None,
         "median_tat_minutes": None,
         "median_tat_hours": None,
         "minimum_tat_minutes": None,
+        "minimum_tat_hours": None,
         "maximum_tat_minutes": None,
+        "maximum_tat_hours": None,
     }
 
     if df.empty:
@@ -99,9 +110,24 @@ def calculate_tat_metrics(df: pd.DataFrame) -> dict:
     median_minutes = float(tat.median())
     minimum_minutes = float(tat.min())
     maximum_minutes = float(tat.max())
+    sla_target_minutes = sla_target_hours * 60
+    sla_count = int(
+        (tat <= sla_target_minutes).sum()
+    )
 
     return {
         "tat_count": int(len(tat)),
+        "sla_target_hours": round(
+            sla_target_hours,
+            2,
+        ),
+
+        "sla_count": sla_count,
+
+        "sla_percentage": round(
+            sla_count / len(tat) * 100,
+            2,
+        ),
 
         "average_tat_minutes": round(
             average_minutes,
@@ -128,8 +154,18 @@ def calculate_tat_metrics(df: pd.DataFrame) -> dict:
             2,
         ),
 
+        "minimum_tat_hours": round(
+            minimum_minutes / 60,
+            2,
+        ),
+
         "maximum_tat_minutes": round(
             maximum_minutes,
+            2,
+        ),
+
+        "maximum_tat_hours": round(
+            maximum_minutes / 60,
             2,
         ),
     }
