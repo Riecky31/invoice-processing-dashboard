@@ -15,9 +15,15 @@ from app.services.reporting.trends import (
 )
 
 
-def format_tat_hours(value):
+WORKDAY_HOURS = 9.0
+
+
+def format_tat_duration(value):
     if value is None:
         return "N/A"
+
+    if value > WORKDAY_HOURS:
+        return f"{value / WORKDAY_HOURS:.1f} days"
 
     return f"{value:.1f} hrs"
 
@@ -208,7 +214,7 @@ with col2:
 with col3:
     st.metric(
         "Average TAT",
-        format_tat_hours(
+        format_tat_duration(
             tat_metrics["average_tat_hours"]
         ),
     )
@@ -395,7 +401,7 @@ with tat_col1:
 
     st.metric(
         "Average TAT",
-        format_tat_hours(
+        format_tat_duration(
             tat_metrics["average_tat_hours"]
         ),
     )
@@ -405,7 +411,7 @@ with tat_col2:
 
     st.metric(
         "Median TAT",
-        format_tat_hours(
+        format_tat_duration(
             tat_metrics["median_tat_hours"]
         ),
     )
@@ -415,7 +421,7 @@ with tat_col3:
 
     st.metric(
         "Fastest",
-        format_tat_hours(
+        format_tat_duration(
             tat_metrics["minimum_tat_hours"]
         ),
     )
@@ -425,7 +431,7 @@ with tat_col4:
 
     st.metric(
         "Slowest",
-        format_tat_hours(
+        format_tat_duration(
             tat_metrics["maximum_tat_hours"]
         ),
     )
@@ -447,12 +453,23 @@ if "tat_minutes" in filtered_df.columns:
             tat_df["tat_minutes"] / 60
         )
 
+        if tat_df["tat_hours"].max() > WORKDAY_HOURS:
+            tat_df["tat_duration"] = (
+                tat_df["tat_hours"] / WORKDAY_HOURS
+            )
+            tat_label = "TAT (Working Days)"
+        else:
+            tat_df["tat_duration"] = tat_df[
+                "tat_hours"
+            ]
+            tat_label = "TAT (Hours)"
+
         fig = px.histogram(
             tat_df,
-            x="tat_hours",
+            x="tat_duration",
             nbins=20,
             labels={
-                "tat_hours": "TAT (Hours)",
+                "tat_duration": tat_label,
                 "count": "Invoices",
             },
         )
@@ -500,6 +517,11 @@ if not staff_summary.empty:
         staff_summary["average_tat"] / 60
     )
 
+    staff_summary["average_tat"] = (
+        staff_summary["average_tat_hours"]
+        .map(format_tat_duration)
+    )
+
     staff_summary = staff_summary.sort_values(
         "invoices",
         ascending=False,
@@ -536,64 +558,11 @@ if not staff_summary.empty:
                 "user_id",
                 "invoices",
                 "invoice_value",
-                "average_tat_hours",
+                "average_tat",
             ]
         ],
         width="stretch",
         hide_index=True,
-    )
-
-
-# =========================================================
-# BUSINESS UNIT PERFORMANCE
-# =========================================================
-
-st.divider()
-
-st.subheader("🏢 Business Unit Performance")
-
-
-business_summary = (
-    filtered_df
-    .groupby("business_unit")
-    .agg(
-        invoices=("invoice_number", "count"),
-        invoice_value=("invoice_amount", "sum"),
-        average_tat=("tat_minutes", "mean"),
-    )
-    .reset_index()
-)
-
-
-if not business_summary.empty:
-
-    business_summary["average_tat_hours"] = (
-        business_summary["average_tat"] / 60
-    )
-
-    fig = px.bar(
-        business_summary,
-        x="business_unit",
-        y="invoices",
-        labels={
-            "business_unit": "Business Unit",
-            "invoices": "Invoices",
-        },
-    )
-
-    fig.update_layout(
-        height=400,
-        margin=dict(
-            l=20,
-            r=20,
-            t=30,
-            b=20,
-        ),
-    )
-
-    st.plotly_chart(
-        fig,
-        width="stretch",
     )
 
 
