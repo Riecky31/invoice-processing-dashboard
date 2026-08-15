@@ -101,6 +101,6 @@ st.write(
 
 st.dataframe(
     filtered[display_columns],
-    use_container_width=True,
+    width="stretch",
     hide_index=True,
 )

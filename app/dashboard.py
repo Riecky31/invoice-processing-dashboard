@@ -248,7 +248,7 @@ else:
 
     st.plotly_chart(
         fig,
-        use_container_width=True,
+        width="stretch",
     )
 
 
@@ -310,7 +310,7 @@ with left:
 
         st.plotly_chart(
             fig,
-            use_container_width=True,
+            width="stretch",
         )
 
 
@@ -357,7 +357,7 @@ with right:
 
         st.plotly_chart(
             fig,
-            use_container_width=True,
+            width="stretch",
         )
 
 
@@ -443,7 +443,7 @@ if "tat_minutes" in filtered_df.columns:
 
         st.plotly_chart(
             fig,
-            use_container_width=True,
+            width="stretch",
         )
 
 
@@ -501,7 +501,7 @@ if not staff_summary.empty:
 
     st.plotly_chart(
         fig,
-        use_container_width=True,
+        width="stretch",
     )
 
     st.dataframe(
@@ -513,7 +513,7 @@ if not staff_summary.empty:
                 "average_tat_hours",
             ]
         ],
-        use_container_width=True,
+        width="stretch",
         hide_index=True,
     )
 
@@ -567,7 +567,7 @@ if not business_summary.empty:
 
     st.plotly_chart(
         fig,
-        use_container_width=True,
+        width="stretch",
     )
 
 
@@ -600,6 +600,6 @@ with st.expander("📋 View Invoice Data"):
 
     st.dataframe(
         filtered_df[available_columns],
-        use_container_width=True,
+        width="stretch",
         hide_index=True,
     )

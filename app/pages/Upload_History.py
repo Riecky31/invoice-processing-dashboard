@@ -136,7 +136,7 @@ for _, report in df.iterrows():
             if st.button(
                 "🗑️ Delete",
                 key=delete_key,
-                use_container_width=True,
+                width="stretch",
             ):
 
                 st.session_state[
@@ -166,7 +166,7 @@ for _, report in df.iterrows():
                         "Yes, Delete",
                         key=f"yes_{upload_id}",
                         type="primary",
-                        use_container_width=True,
+                        width="stretch",
                     ):
 
                         deleted = delete_upload(
@@ -200,7 +200,7 @@ for _, report in df.iterrows():
                     if st.button(
                         "Cancel",
                         key=f"cancel_{upload_id}",
-                        use_container_width=True,
+                        width="stretch",
                     ):
 
                         st.session_state[

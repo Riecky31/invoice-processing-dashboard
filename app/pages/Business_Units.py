@@ -81,6 +81,6 @@ display["invoice_value"] = display[
 
 st.dataframe(
     display,
-    use_container_width=True,
+    width="stretch",
     hide_index=True,
 )

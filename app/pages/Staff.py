@@ -116,7 +116,7 @@ else:
 
     st.dataframe(
         display_summary,
-        use_container_width=True,
+        width="stretch",
         hide_index=True,
     )
 
@@ -142,7 +142,7 @@ if not display_summary.empty:
 
     st.bar_chart(
         volume_chart,
-        use_container_width=True,
+        width="stretch",
     )
 
 
@@ -165,7 +165,7 @@ if not display_summary.empty:
 
     st.bar_chart(
         value_chart,
-        use_container_width=True,
+        width="stretch",
     )
 
 
@@ -232,6 +232,6 @@ if not display_summary.empty:
                 "% of Invoices",
             ]
         ],
-        use_container_width=True,
+        width="stretch",
         hide_index=True,
     )

@@ -2,6 +2,7 @@ from pathlib import Path
 import datetime
 import logging
 import os
+import re
 
 try:
     import pythoncom
@@ -10,18 +11,36 @@ except Exception:  # pragma: no cover - import may not be present in CI
     pythoncom = None
     win32com = None
 
+from app.config import get_settings
 from app.services.invoice_importer import import_weekly_report
 
 
 LOG = logging.getLogger(__name__)
 
-BASE_DIR = Path(__file__).resolve().parents[3]
+BASE_DIR = Path(__file__).resolve().parents[2]
 UPLOADS_DIR = BASE_DIR / "uploads"
+SAFE_FILENAME_RE = re.compile(r'[<>:"/\\|?*\x00-\x1f]+')
+
+
+def _safe_attachment_filename(filename: str) -> str:
+    safe_name = SAFE_FILENAME_RE.sub("_", filename).strip(" .")
+
+    if not safe_name:
+        return "attachment.xlsx"
+
+    if len(safe_name) <= 180:
+        return safe_name
+
+    suffix = Path(safe_name).suffix
+    stem = Path(safe_name).stem
+    max_stem_length = max(1, 180 - len(suffix))
+    return f"{stem[:max_stem_length]}{suffix}"
 
 
 def ensure_uploads_dir() -> Path:
-    UPLOADS_DIR.mkdir(parents=True, exist_ok=True)
-    return UPLOADS_DIR
+    upload_dir = get_settings().outlook_download_dir or UPLOADS_DIR
+    upload_dir.mkdir(parents=True, exist_ok=True)
+    return upload_dir.resolve()
 
 
 def find_and_download_reports(
@@ -34,7 +53,7 @@ def find_and_download_reports(
             "Install with: pip install pywin32"
         )
 
-    ensure_uploads_dir()
+    upload_dir = ensure_uploads_dir()
 
     pythoncom.CoInitialize()
 
@@ -90,9 +109,12 @@ def find_and_download_reports(
                         "%Y%m%d%H%M%S"
                     )
 
-                    save_name = f"{timestamp}_{filename}"
-                    save_path = UPLOADS_DIR / save_name
+                    save_name = (
+                        f"{timestamp}_{_safe_attachment_filename(filename)}"
+                    )
+                    save_path = upload_dir / save_name
                     save_path = save_path.resolve()
+                    save_path.parent.mkdir(parents=True, exist_ok=True)
 
                     attachment.SaveAsFile(str(save_path))
 
