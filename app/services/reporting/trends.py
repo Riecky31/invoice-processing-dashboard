@@ -1,81 +1,68 @@
+from __future__ import annotations
+
 import pandas as pd
 
 
-def get_daily_summary(
-    df: pd.DataFrame,
-) -> pd.DataFrame:
+def get_daily_summary(df: pd.DataFrame) -> pd.DataFrame:
+    """
+    Return invoice count and amount by processing day.
+    """
 
     if df.empty:
         return pd.DataFrame(
             columns=[
-                "processing_day",
-                "invoices",
-                "invoice_value",
+                "date",
+                "invoice_count",
+                "total_amount",
             ]
         )
 
     data = df.copy()
 
-    data["processing_day"] = (
-        pd.to_datetime(
-            data["invoice_processing_date"],
-            errors="coerce",
-        )
-        .dt.date
-    )
-
-    data = data.dropna(
-        subset=["processing_day"]
-    )
-
-    if data.empty:
-        return pd.DataFrame(
-            columns=[
-                "processing_day",
-                "invoices",
-                "invoice_value",
-            ]
-        )
+    data["date"] = pd.to_datetime(
+        data["invoice_processing_date"],
+        errors="coerce",
+    ).dt.date
 
     summary = (
-        data.groupby("processing_day")
+        data.dropna(subset=["date"])
+        .groupby("date")
         .agg(
-            invoices=("invoice_number", "count"),
-            invoice_value=("invoice_amount", "sum"),
+            invoice_count=("invoice_number", "count"),
+            total_amount=("invoice_amount", "sum"),
         )
         .reset_index()
-        .sort_values("processing_day")
+        .sort_values("date")
     )
 
     return summary
 
 
-def get_weekly_summary(
-    df: pd.DataFrame,
-) -> pd.DataFrame:
+def get_weekly_summary(df: pd.DataFrame) -> pd.DataFrame:
+    """
+    Return invoice count and amount by reporting week.
+    """
 
     if df.empty:
         return pd.DataFrame(
             columns=[
                 "reporting_year",
                 "reporting_week",
-                "invoices",
-                "invoice_value",
+                "invoice_count",
+                "total_amount",
             ]
         )
 
-    data = df.copy()
-
     summary = (
-        data.groupby(
+        df.groupby(
             [
                 "reporting_year",
                 "reporting_week",
             ]
         )
         .agg(
-            invoices=("invoice_number", "count"),
-            invoice_value=("invoice_amount", "sum"),
+            invoice_count=("invoice_number", "count"),
+            total_amount=("invoice_amount", "sum"),
         )
         .reset_index()
         .sort_values(
@@ -89,26 +76,25 @@ def get_weekly_summary(
     return summary
 
 
-def get_monthly_summary(
-    df: pd.DataFrame,
-) -> pd.DataFrame:
+def get_monthly_summary(df: pd.DataFrame) -> pd.DataFrame:
+    """
+    Return invoice count and amount by reporting month.
+    """
 
     if df.empty:
         return pd.DataFrame(
             columns=[
                 "reporting_month",
-                "invoices",
-                "invoice_value",
+                "invoice_count",
+                "total_amount",
             ]
         )
 
-    data = df.copy()
-
     summary = (
-        data.groupby("reporting_month")
+        df.groupby("reporting_month")
         .agg(
-            invoices=("invoice_number", "count"),
-            invoice_value=("invoice_amount", "sum"),
+            invoice_count=("invoice_number", "count"),
+            total_amount=("invoice_amount", "sum"),
         )
         .reset_index()
         .sort_values("reporting_month")
@@ -117,142 +103,36 @@ def get_monthly_summary(
     return summary
 
 
-def get_daily_tat_summary(
-    df: pd.DataFrame,
-) -> pd.DataFrame:
+def get_business_unit_summary(df: pd.DataFrame) -> pd.DataFrame:
+    """
+    Return invoice volume and amount grouped by business unit.
+    """
 
-    if df.empty or "tat_minutes" not in df.columns:
+    if df.empty:
         return pd.DataFrame(
             columns=[
-                "processing_day",
-                "average_tat_hours",
-                "median_tat_hours",
+                "business_unit",
+                "invoice_count",
+                "total_amount",
             ]
         )
 
-    data = df.copy()
-
-    data["processing_day"] = (
-        pd.to_datetime(
-            data["invoice_processing_date"],
-            errors="coerce",
-        )
-        .dt.date
-    )
-
-    data["tat_minutes"] = pd.to_numeric(
-        data["tat_minutes"],
-        errors="coerce",
-    )
-
-    data = data[
-        data["tat_minutes"].notna()
-        & (data["tat_minutes"] >= 0)
-    ]
-
-    if data.empty:
-        return pd.DataFrame(
-            columns=[
-                "processing_day",
-                "average_tat_hours",
-                "median_tat_hours",
-            ]
-        )
-
-    summary = (
-        data.groupby("processing_day")
+    result = (
+        df.groupby("business_unit", dropna=False)
         .agg(
-            average_tat_minutes=(
-                "tat_minutes",
-                "mean",
-            ),
-            median_tat_minutes=(
-                "tat_minutes",
-                "median",
-            ),
+            invoice_count=("id", "count"),
+            total_amount=("invoice_amount", "sum"),
         )
         .reset_index()
     )
 
-    summary["average_tat_hours"] = (
-        summary["average_tat_minutes"] / 60
+    result["business_unit"] = (
+        result["business_unit"]
+        .fillna("Unknown")
+        .astype(str)
     )
 
-    summary["median_tat_hours"] = (
-        summary["median_tat_minutes"] / 60
-    )
-
-    return summary[
-        [
-            "processing_day",
-            "average_tat_hours",
-            "median_tat_hours",
-        ]
-    ]
-
-
-def get_monthly_tat_summary(
-    df: pd.DataFrame,
-) -> pd.DataFrame:
-
-    if df.empty or "tat_minutes" not in df.columns:
-        return pd.DataFrame(
-            columns=[
-                "reporting_month",
-                "average_tat_hours",
-                "median_tat_hours",
-            ]
-        )
-
-    data = df.copy()
-
-    data["tat_minutes"] = pd.to_numeric(
-        data["tat_minutes"],
-        errors="coerce",
-    )
-
-    data = data[
-        data["tat_minutes"].notna()
-        & (data["tat_minutes"] >= 0)
-    ]
-
-    if data.empty:
-        return pd.DataFrame(
-            columns=[
-                "reporting_month",
-                "average_tat_hours",
-                "median_tat_hours",
-            ]
-        )
-
-    summary = (
-        data.groupby("reporting_month")
-        .agg(
-            average_tat_minutes=(
-                "tat_minutes",
-                "mean",
-            ),
-            median_tat_minutes=(
-                "tat_minutes",
-                "median",
-            ),
-        )
-        .reset_index()
-        .sort_values("reporting_month")
-    )
-
-    summary["average_tat_hours"] = (
-        summary["average_tat_minutes"] / 60
-    )
-
-    summary["median_tat_hours"] = (
-        summary["median_tat_minutes"] / 60
-    )
-
-    return summary[
-        [
-            "reporting_month",
-            "average_tat_hours",
-            "median_tat_hours",
-        ]
-    ]
+    return result.sort_values(
+        "total_amount",
+        ascending=False,
+    ).reset_index(drop=True)

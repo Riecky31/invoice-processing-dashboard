@@ -176,7 +176,10 @@ def get_business_unit_summary(
         return pd.DataFrame()
 
     return (
-        df.groupby("business_unit")
+        df.groupby(
+            ["business_unit", "user_id"],
+            dropna=False,
+        )
         .agg(
             invoices=("invoice_number", "count"),
             invoice_value=("invoice_amount", "sum"),
@@ -184,7 +187,8 @@ def get_business_unit_summary(
         )
         .reset_index()
         .sort_values(
-            "invoices",
-            ascending=False,
+            ["business_unit", "invoices"],
+            ascending=[True, False],
         )
+        .reset_index(drop=True)
     )

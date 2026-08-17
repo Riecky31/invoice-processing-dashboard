@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import pandas as pd
 from sqlalchemy import select
 
@@ -12,17 +14,39 @@ def load_invoices() -> pd.DataFrame:
 
     with SessionLocal() as session:
         invoices = session.scalars(
-            select(Invoice)
-            .order_by(Invoice.invoice_processing_date)
+            select(Invoice).order_by(Invoice.invoice_processing_date)
         ).all()
 
     if not invoices:
-        return pd.DataFrame()
+        return pd.DataFrame(
+            columns=[
+                "id",
+                "record_id",
+                "user_id",
+                "invoice_processing_date",
+                "invoice_date",
+                "invoice_number",
+                "invoice_type",
+                "vendor_name",
+                "vendor_id",
+                "business_unit",
+                "invoice_amount",
+                "invoice_tax_amount",
+                "currency",
+                "reporting_month",
+                "reporting_year",
+                "reporting_week",
+                "source_file",
+                "shared_drive_posted_at",
+                "tat_minutes",
+                "created_at",
+            ]
+        )
 
-    rows = []
+    records = []
 
     for invoice in invoices:
-        rows.append(
+        records.append(
             {
                 "id": invoice.id,
                 "record_id": invoice.record_id,
@@ -34,8 +58,8 @@ def load_invoices() -> pd.DataFrame:
                 "vendor_name": invoice.vendor_name,
                 "vendor_id": invoice.vendor_id,
                 "business_unit": invoice.business_unit,
-                "invoice_amount": float(invoice.invoice_amount),
-                "invoice_tax_amount": float(invoice.invoice_tax_amount),
+                "invoice_amount": float(invoice.invoice_amount or 0),
+                "invoice_tax_amount": float(invoice.invoice_tax_amount or 0),
                 "currency": invoice.currency,
                 "reporting_month": invoice.reporting_month,
                 "reporting_year": invoice.reporting_year,
@@ -47,25 +71,29 @@ def load_invoices() -> pd.DataFrame:
             }
         )
 
-    df = pd.DataFrame(rows)
+    df = pd.DataFrame(records)
 
-    # Ensure date columns are datetime
-    date_columns = [
-        "invoice_processing_date",
-        "invoice_date",
-        "shared_drive_posted_at",
-        "created_at",
-    ]
+    if not df.empty:
+        df["invoice_processing_date"] = pd.to_datetime(
+            df["invoice_processing_date"],
+            errors="coerce",
+        )
 
-    for column in date_columns:
-        if column in df.columns:
-            df[column] = pd.to_datetime(
-                df[column],
-                errors="coerce",
-            )
+        df["invoice_date"] = pd.to_datetime(
+            df["invoice_date"],
+            errors="coerce",
+        )
 
-    # TAT in hours for reporting
-    if "tat_minutes" in df.columns:
+        df["shared_drive_posted_at"] = pd.to_datetime(
+            df["shared_drive_posted_at"],
+            errors="coerce",
+        )
+
+        df["created_at"] = pd.to_datetime(
+            df["created_at"],
+            errors="coerce",
+        )
+
         df["tat_hours"] = df["tat_minutes"] / 60
 
     return df

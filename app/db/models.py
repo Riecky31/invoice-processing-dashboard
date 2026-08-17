@@ -179,3 +179,88 @@ class EmailAttachmentImport(Base):
         onupdate=datetime.utcnow,
         nullable=False,
     )
+
+class InvoiceReportRow(Base):
+ 
+    __tablename__ = "invoice_report_rows"
+
+    id: Mapped[int] = mapped_column(
+        Integer,
+        primary_key=True,
+    )
+
+    upload_id: Mapped[int] = mapped_column(
+        ForeignKey("uploads.id"),
+        nullable=False,
+    )
+
+    row_number: Mapped[int] = mapped_column(
+        Integer,
+        nullable=False,
+    )
+
+    user_id: Mapped[str] = mapped_column(
+        String(100),
+        nullable=False,
+    )
+
+    invoice_processing_date: Mapped[datetime] = mapped_column(
+        DateTime,
+        nullable=False,
+    )
+
+    invoice_date: Mapped[datetime] = mapped_column(
+        DateTime,
+        nullable=False,
+    )
+
+    invoice_number: Mapped[str] = mapped_column(
+        String(100),
+        nullable=False,
+    )
+
+    invoice_type: Mapped[str] = mapped_column(
+        String(100),
+        nullable=False,
+    )
+
+    vendor_name: Mapped[str] = mapped_column(
+        String(255),
+        nullable=False,
+    )
+
+    vendor_id: Mapped[str] = mapped_column(
+        String(100),
+        nullable=False,
+    )
+
+    business_unit: Mapped[str] = mapped_column(
+        String(100),
+        nullable=False,
+    )
+
+    invoice_amount: Mapped[Decimal] = mapped_column(
+        Numeric(18, 2),
+        nullable=False,
+    )
+
+    invoice_tax_amount: Mapped[Decimal] = mapped_column(
+        Numeric(18, 2),
+        nullable=False,
+    )
+
+    currency: Mapped[str] = mapped_column(
+        String(10),
+        nullable=False,
+    )
+
+    source_file: Mapped[str] = mapped_column(
+        String(255),
+        nullable=False,
+    )
+
+    imported_at: Mapped[datetime] = mapped_column(
+        DateTime,
+        default=datetime.utcnow,
+        nullable=False,
+    )

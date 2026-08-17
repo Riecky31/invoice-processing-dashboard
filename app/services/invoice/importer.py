@@ -9,7 +9,7 @@ from sqlalchemy import select
 
 from app.data.excel_reader import read_weekly_report
 from app.db.database import SessionLocal
-from app.db.models import Invoice, Upload
+from app.db.models import Invoice, InvoiceReportRow, Upload
 
 
 @dataclass(frozen=True)
@@ -88,6 +88,75 @@ def process_weekly_report(file_path: str | Path) -> ImportResult:
         try:
             df = read_weekly_report(file_path)
 
+            # =====================================================
+            # 1. STORE RAW EXCEL ROWS
+            # =====================================================
+
+            for row_number, (_, row) in enumerate(
+                df.iterrows(),
+                start=2,
+            ):
+                raw_row = InvoiceReportRow(
+                    upload_id=upload_id,
+                    row_number=row_number,
+
+                    user_id=_as_text(
+                        row["User ID"]
+                    ),
+
+                    invoice_processing_date=_as_datetime(
+                        row["Invoice Processing Date"]
+                    ),
+
+                    invoice_date=_as_datetime(
+                        row["Invoice Date"]
+                    ),
+
+                    invoice_number=_as_text(
+                        row["Invoice Number"]
+                    ),
+
+                    invoice_type=_as_text(
+                        row["Invoice Type"]
+                    ),
+
+                    vendor_name=_as_text(
+                        row["Vendor Name"]
+                    ),
+
+                    vendor_id=_as_text(
+                        row["Vendor ID"]
+                    ),
+
+                    business_unit=_as_text(
+                        row["Business Unit"]
+                    ),
+
+                    invoice_amount=_as_decimal(
+                        row["Invoice Amount"]
+                    ),
+
+                    invoice_tax_amount=_as_decimal(
+                        row["Invoice Tax Amount"]
+                    ),
+
+                    currency=_as_text(
+                        row["Currency"]
+                    ),
+
+                    source_file=file_path.name,
+                )
+
+                session.add(raw_row)
+
+            # Make sure the raw rows are written before
+            # continuing with the processed invoice records.
+            session.flush()
+
+            # =====================================================
+            # 2. PROCESS INVOICES
+            # =====================================================
+
             rows_inserted = 0
             duplicates_found = 0
 
@@ -113,12 +182,17 @@ def process_weekly_report(file_path: str | Path) -> ImportResult:
                     row["Invoice Date"]
                 )
 
+                # =================================================
+                # TAT
+                # Invoice Date -> Invoice Processing Date
+                # Monday-Friday, 08:00-17:00
+                # =================================================
+
                 tat_minutes = calculate_tat_minutes(
                     invoice_date,
                     invoice_processing_date,
                 )
 
-      
                 invoice = Invoice(
                     record_id=record_id,
 
@@ -126,7 +200,9 @@ def process_weekly_report(file_path: str | Path) -> ImportResult:
                         row["User ID"]
                     ),
 
-                    invoice_processing_date=invoice_processing_date,
+                    invoice_processing_date=(
+                        invoice_processing_date
+                    ),
 
                     invoice_date=invoice_date,
 
@@ -183,7 +259,10 @@ def process_weekly_report(file_path: str | Path) -> ImportResult:
 
                 rows_inserted += 1
 
-     
+            # =====================================================
+            # 3. UPDATE UPLOAD
+            # =====================================================
+
             upload.rows_found = len(df)
 
             upload.rows_inserted = rows_inserted
